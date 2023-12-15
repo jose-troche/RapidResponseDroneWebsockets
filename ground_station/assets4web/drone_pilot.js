@@ -1,20 +1,39 @@
+const VIDEO_FRAME = 'VIDEO_FRAME';
+const RECOGNIZED_OBJECTS = 'RECOGNIZED_OBJECTS';
+const SEARCHED_OBJECTS = 'SEARCHED_OBJECTS';
+const FIRE_LASER = 'FIRE_LASER';
+const VOICE_COMMAND = 'VOICE_COMMAND';
+const DRONE_TELEMETRY = 'DRONE_TELEMETRY';
+const DRONE_COMMAND = 'DRONE_COMMAND';
+
 window.addEventListener("DOMContentLoaded", () => {
     const websocket = new WebSocket("ws://localhost:5678/");
 
     // Websocket message handler
     websocket.onmessage = ({ data }) => {
         const event = JSON.parse(data);
-        switch (event.type) {
-            case 'video_frame':
-                break;
-            case 'seached_objects':
-                break;
-            case 'fire_laser':
-                break;
-            case 'recognized_objects':
-                break;
-            case 'drone_battery':
-                break;
+        if (VIDEO_FRAME in event) {
+            event[VIDEO_FRAME]
+        }
+
+        if (RECOGNIZED_OBJECTS in event) {
+            console.log(event[RECOGNIZED_OBJECTS])
+        }
+
+        if (SEARCHED_OBJECTS in event) {
+            console.log(event[SEARCHED_OBJECTS])
+        }
+
+        if (FIRE_LASER in event) {
+            console.log(event[FIRE_LASER])
+        }
+
+        if (VOICE_COMMAND in event) {
+            console.log(event[VOICE_COMMAND])
+        }
+
+        if (DRONE_TELEMETRY in event) {
+            console.log(event[DRONE_TELEMETRY])
         }
     };
 
@@ -23,10 +42,10 @@ window.addEventListener("DOMContentLoaded", () => {
     //   https://dl-cdn.ryzerobotics.com/downloads/tello/20180910/Tello%20SDK%20Documentation%20EN_1.3.pdf
     function sendDroneCommandFromGamepadState() {
         const controller = navigator.getGamepads ? navigator.getGamepads()[0] : false;
-    
+
         if (controller) {
             let command = "";
-        
+
             if (controller.buttons[3].pressed) command = "takeoff"; // X
             else if (controller.buttons[0].pressed) command = "land"; // B
             else if (controller.buttons[1].pressed) command = "streamon"; // A
@@ -45,17 +64,13 @@ window.addEventListener("DOMContentLoaded", () => {
                 const c = (-controller.axes[3]*MAX).toFixed(DECIMALS);
                 command = `rc ${a} ${b} ${c} ${d}`;
             }
-        
+
             sendDroneCommand(command);
         }
     }
     setInterval(sendDroneCommandFromGamepadState, 200);
-  
-    function sendDroneCommand(command) {
-        const event = {
-            type: "drone_command",
-            command,
-        };
-        websocket.send(JSON.stringify(event));
+
+    function sendDroneCommand(DRONE_COMMAND) {
+        websocket.send(JSON.stringify({ DRONE_COMMAND }));
     }
 });

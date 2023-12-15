@@ -16,8 +16,9 @@ pip install -r requirements.txt
 ```
 pip install 'watchdog[watchmedo]'
 
+cd ground_station
 watchmedo auto-restart --pattern "*.py" --recursive --signal SIGTERM \
-    python app.py
+  python websocket_server.py
 ```
 
 
