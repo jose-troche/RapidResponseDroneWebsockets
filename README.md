@@ -14,11 +14,21 @@ pip install -r requirements.txt
 
 * For local dev
 ```
-pip install 'watchdog[watchmedo]'
-
 cd ground_station
-watchmedo auto-restart --pattern "*.py" --recursive --signal SIGTERM \
-  python websocket_server.py
+./main.py
+
+# or
+
+./main.py 0 1
+
+# Where the numbers are indices for the array of components, so 0 and 2 will run the first and the third component
+[
+    drone_telemetry_listener,
+    websocket_server
+]
 ```
+
+
+
 
 

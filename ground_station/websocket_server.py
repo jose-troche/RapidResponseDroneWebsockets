@@ -1,13 +1,14 @@
-#!/usr/bin/env python
-
 import asyncio
 import json
+import base64
 import websockets
 import functools
 from multiprocessing.managers import DictProxy
+from video_frame_utilities import to_jpg
 from drone_commander import send_command_to_drone
-from database import (VOICE_COMMAND, DRONE_COMMAND, VIDEO_FRAME, FIRE_LASER,
-                      DRONE_TELEMETRY, SEARCHED_OBJECTS, RECOGNIZED_OBJECTS)
+from database import (VOICE_COMMAND, DRONE_COMMAND, VIDEO_FRAME,
+                      FIRE_LASER, LAST_DRONE_COMMAND, SEARCHED_OBJECTS,
+                      DRONE_TELEMETRY, RECOGNIZED_OBJECTS)
 
 
 async def handler(websocket, db: DictProxy):
@@ -17,15 +18,13 @@ async def handler(websocket, db: DictProxy):
     )
 
 async def receiver_handler(websocket, db: DictProxy):
-    last_command = None
-
     async for message in websocket:
         event = json.loads(message)
 
         if DRONE_COMMAND in event:
             drone_command = event[DRONE_COMMAND]
-            if last_command != drone_command:
-                last_command = drone_command
+            if db[LAST_DRONE_COMMAND] != drone_command:
+                db[LAST_DRONE_COMMAND] = drone_command
                 print(f'Drone command: {drone_command}')
                 send_command_to_drone(drone_command)
             else:
@@ -41,8 +40,10 @@ async def sender_handler(websocket, db: DictProxy):
         if db[DRONE_TELEMETRY]:
             event[DRONE_TELEMETRY] = db[DRONE_TELEMETRY]
 
-        if db[VIDEO_FRAME]:
-            event[VIDEO_FRAME] = db[VIDEO_FRAME]
+        if db[VIDEO_FRAME] is not None:
+            jpg = to_jpg(db[VIDEO_FRAME])
+            img_src = 'data:image/jpg;base64,' + base64.b64encode(jpg).decode()
+            event[VIDEO_FRAME] = img_src
 
         if db[RECOGNIZED_OBJECTS]:
             event[RECOGNIZED_OBJECTS] = db[RECOGNIZED_OBJECTS]
@@ -56,7 +57,13 @@ async def sender_handler(websocket, db: DictProxy):
             event[VOICE_COMMAND] = db[VOICE_COMMAND]
             db[VOICE_COMMAND] = None
 
-        await websocket.send(json.dumps(event))
+        if db[SEARCHED_OBJECTS]:
+            event[SEARCHED_OBJECTS] = list(db[SEARCHED_OBJECTS])
+
+        try:
+            await websocket.send(json.dumps(event))
+        except websockets.ConnectionClosedOK:
+            break
 
         await asyncio.sleep(0.0333)
 

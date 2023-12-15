@@ -1,39 +1,69 @@
-const VIDEO_FRAME = 'VIDEO_FRAME';
-const RECOGNIZED_OBJECTS = 'RECOGNIZED_OBJECTS';
-const SEARCHED_OBJECTS = 'SEARCHED_OBJECTS';
-const FIRE_LASER = 'FIRE_LASER';
-const VOICE_COMMAND = 'VOICE_COMMAND';
-const DRONE_TELEMETRY = 'DRONE_TELEMETRY';
-const DRONE_COMMAND = 'DRONE_COMMAND';
+const websocket = new WebSocket("ws://localhost:5678/");
+function getById(id) { return document.getElementById(id); }
+
+window.onkeydown = (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault(); // Cancel the default action, if needed
+        setSearchObjects();
+    }
+}
+
+// -------------------------------- Set Searched Objects ------------------------------------
+function setSearchedObjects(){
+    const searched_objects_input = searched_objects_el.value;
+    if (searched_objects_input) {
+        const list = searched_objects_input.split(",").map(i => i.trim())
+        websocket.send(JSON.stringify(list));
+    }
+};
 
 window.addEventListener("DOMContentLoaded", () => {
-    const websocket = new WebSocket("ws://localhost:5678/");
+    const VIDEO_FRAME = 'VIDEO_FRAME';
+    const RECOGNIZED_OBJECTS = 'RECOGNIZED_OBJECTS';
+    const SEARCHED_OBJECTS = 'SEARCHED_OBJECTS';
+    const FIRE_LASER = 'FIRE_LASER';
+    const VOICE_COMMAND = 'VOICE_COMMAND';
+    const DRONE_TELEMETRY = 'DRONE_TELEMETRY';
+    const DRONE_COMMAND = 'DRONE_COMMAND';
+
+    const   drone_command_el = getById(DRONE_COMMAND),
+        drone_telemetry_el = getById(DRONE_TELEMETRY),
+        voice_command_el = getById(VOICE_COMMAND),
+        fire_laser_el = getById(FIRE_LASER),
+        searched_objects_el = getById(SEARCHED_OBJECTS),
+        recognized_objects_el = getById(RECOGNIZED_OBJECTS),
+        video_frame_el = getById(VIDEO_FRAME);
 
     // Websocket message handler
     websocket.onmessage = ({ data }) => {
         const event = JSON.parse(data);
         if (VIDEO_FRAME in event) {
-            event[VIDEO_FRAME]
+            video_frame_el.src = event[VIDEO_FRAME];
         }
 
         if (RECOGNIZED_OBJECTS in event) {
-            console.log(event[RECOGNIZED_OBJECTS])
+            const recognized_objects = 
+                event[RECOGNIZED_OBJECTS].join('<li>');
+            recognized_objects_el.innerHTML = `<li>${recognized_objects}`;
         }
 
         if (SEARCHED_OBJECTS in event) {
-            console.log(event[SEARCHED_OBJECTS])
+            const searched_objects = 
+                event[SEARCHED_OBJECTS].join('<li>');
+            searched_objects_el.innerHTML = `<li>${searched_objects}`;
         }
 
         if (FIRE_LASER in event) {
-            console.log(event[FIRE_LASER])
+            fire_laser_el.style.display = event[FIRE_LASER] ? 'inline' : 'none';
         }
 
         if (VOICE_COMMAND in event) {
-            console.log(event[VOICE_COMMAND])
+            voice_command_el.innerHTML = event[VOICE_COMMAND];
         }
 
         if (DRONE_TELEMETRY in event) {
-            console.log(event[DRONE_TELEMETRY])
+            const t = event[DRONE_TELEMETRY];
+            drone_telemetry_el.innerHTML = `Battery: ${t['bat']}%<li>Height: ${t['h']||0} cm`;
         }
     };
 
@@ -66,11 +96,15 @@ window.addEventListener("DOMContentLoaded", () => {
             }
 
             sendDroneCommand(command);
+
+            if (command != 'rc 0.0000 0.0000 0.0000 0.0000') {
+                drone_command_el.innerText = command;
+            }
         }
     }
-    setInterval(sendDroneCommandFromGamepadState, 200);
+    setInterval(sendDroneCommandFromGamepadState, 100);
 
-    function sendDroneCommand(DRONE_COMMAND) {
-        websocket.send(JSON.stringify({ DRONE_COMMAND }));
+    function sendDroneCommand(command) {
+        websocket.send(JSON.stringify({ DRONE_COMMAND: command }));
     }
 });

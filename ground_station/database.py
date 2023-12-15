@@ -8,6 +8,7 @@ FIRE_LASER = 'FIRE_LASER'
 VOICE_COMMAND = 'VOICE_COMMAND'
 DRONE_TELEMETRY = 'DRONE_TELEMETRY'
 DRONE_COMMAND = 'DRONE_COMMAND'
+LAST_DRONE_COMMAND = 'LAST_DRONE_COMMAND'
 
 
 def db_initialize(db: DictProxy):
@@ -17,4 +18,5 @@ def db_initialize(db: DictProxy):
     db[FIRE_LASER] = False
     db[VOICE_COMMAND] = None
     db[DRONE_TELEMETRY] = {'bat': '100'}
+    db[LAST_DRONE_COMMAND] =  None
 
