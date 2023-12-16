@@ -14,6 +14,7 @@ def video_receiver(db: DictProxy):
         while True:
             if not is_frame_captured:
                 print('Trying to acquire video feed ...')
+                db[VIDEO_FRAME] = None
                 capture = cv2.VideoCapture(VIDEO_URL)
             else:
                 db[VIDEO_FRAME] = frame

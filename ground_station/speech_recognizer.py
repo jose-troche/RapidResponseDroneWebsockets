@@ -40,10 +40,10 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
                                 "stop video",
                                 "emergency",
                                 "alert"]
-        
+
         DISTANCE_CM = 30
         ANGLE = 20 # deg
-        
+
         voice_to_drone_commands = {
             "take off": "takeoff",
             "land": "land",
@@ -82,21 +82,26 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
                     self.last_command = substring
                     self.db[VOICE_COMMAND] = voice_command = substring
 
-                    print(f'Voice command: {voice_command}')
+                    print(f'Voice command: "{voice_command}"')
 
                     send_command_to_drone(voice_to_drone_commands[voice_command])
 
             # Open commands
             for substring in valid_open_commands:
                 if substring in command.lower():
-                    if substring == self.last_command:
+                    target = command.lower().split(substring, 1)[1].replace('.','').strip().split()
+
+                    if len(target) > 0:
+                        target = target[0] # Just get the first word as target
+
+                    if target == self.last_target:
                         return
-                    res = command.lower().split(substring, 1)
-                    target = res[1].replace(".","").strip()
-                    self.db[VOICE_COMMAND] = substring + target
+                    self.last_target = target
+
+                    self.db[VOICE_COMMAND] = f'{substring} {target}'
 
                     if target:
-                        print(f"Setting target to {target}")
+                        print(f'Setting target to: "{target}"')
                         self.db[SEARCHED_OBJECTS] = set([target])
         else:
             self.last_command = None
@@ -141,5 +146,5 @@ async def basic_transcribe(db):
     # Instantiate our handler and start processing events
     handler = TranscriptEventHandler(stream.output_stream)
     handler.db = db
-    handler.last_command = None
+    handler.last_command = handler.last_target = None
     await asyncio.gather(write_chunks(stream, db), handler.handle_events())

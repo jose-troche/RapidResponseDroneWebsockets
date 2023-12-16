@@ -18,7 +18,12 @@ async def handler(websocket, db: DictProxy):
     )
 
 async def receiver_handler(websocket, db: DictProxy):
-    async for message in websocket:
+    while True:
+        try:
+            message = await websocket.recv()
+        except websockets.ConnectionClosedOK:
+            break
+
         event = json.loads(message)
 
         if DRONE_COMMAND in event:
@@ -32,6 +37,7 @@ async def receiver_handler(websocket, db: DictProxy):
 
         if SEARCHED_OBJECTS in event:
             db[SEARCHED_OBJECTS] = set([i.lower().strip() for i in event[SEARCHED_OBJECTS]])
+            print(f'Set searched objects to: {db[SEARCHED_OBJECTS]}')
 
 async def sender_handler(websocket, db: DictProxy):
     while True:
@@ -47,7 +53,7 @@ async def sender_handler(websocket, db: DictProxy):
 
         if db[RECOGNIZED_OBJECTS]:
             event[RECOGNIZED_OBJECTS] = db[RECOGNIZED_OBJECTS]
-            db[RECOGNIZED_OBJECTS] = []
+            # db[RECOGNIZED_OBJECTS] = []
 
         if db[FIRE_LASER]:
             event[FIRE_LASER] = db[FIRE_LASER]

@@ -6,7 +6,6 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <meta charset="utf-8" />
-    <script type="text/javascript" src="drone_pilot.js"></script>
   </head>
 
   <body style="background-color: rgb(242, 242, 249); font-family: Arial, Helvetica, sans-serif;">
@@ -24,11 +23,12 @@
         <li><span id="VOICE_COMMAND" style="margin-bottom: 5px;">[None]</span></li>
 
         <h3>Drone Telemetry</h3>
-        <li><span id="DRONE_TELEMETRY" style="margin-bottom: 5px;"></span></li>
+        <li>Battery: <span id="DRONE_BATTERY" style="margin-bottom: 5px;"></span></li>
+        <li>Height: <span id="DRONE_HEIGHT""></span> cm</li>
 
         <h3>Searched Objects</h3>
         <div id="SEARCHED_OBJECTS" style="margin-bottom: 15px;"></div>
-        <input id="SEARCHED_OBJECTS_INPUT"></input>
+        <input id="SEARCHED_OBJECTS_INPUT" value="plant"></input>
         <button onclick="setSearchedObjects()">Set</button>
         <span id="FIRE_LASER" style="display: none; background-color: red; text-align: center; color: white;
                               font-weight: bolder; margin-left: 20px; padding: 2px 10px; width: 100px;">

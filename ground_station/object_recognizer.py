@@ -20,15 +20,16 @@ def object_recognizer(db: DictProxy):
         while True:
             frame = db[VIDEO_FRAME]
             if not frame is None:
-                cropped_frame = video_frame_utilities.crop_margin(frame, 100)
+                cropped_frame = video_frame_utilities.crop_margin(frame, 300) # Original 960x720
                 image_bytes = video_frame_utilities.to_jpg(cropped_frame)
+
                 try:
                     response = rekognition.detect_labels(
                         Image={'Bytes': image_bytes},
-                        MinConfidence=77.5
+                        MinConfidence = 80.0
                     )
                     recognized_objects_list = [ label['Name'].lower().strip() for label in response['Labels'] ]
-                    db[RECOGNIZED_OBJECTS] = recognized_objects_list
+                    db[RECOGNIZED_OBJECTS] = response['Labels'];
                     # print(recognized_objects_list)
 
                     for object in recognized_objects_list:
