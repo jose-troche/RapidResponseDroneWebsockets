@@ -2,7 +2,7 @@ import time
 import threading
 import boto3
 import video_frame_utilities
-from laser_commander import start_laser_commander
+from laser_commander import fire_laser
 from database import VIDEO_FRAME, RECOGNIZED_OBJECTS, SEARCHED_OBJECTS, FIRE_LASER
 from multiprocessing.managers import DictProxy
 
@@ -12,10 +12,6 @@ from multiprocessing.managers import DictProxy
 def object_recognizer(db: DictProxy):
     rekognition = boto3.client('rekognition', region_name='us-east-2')
 
-    # Start Laser Commander
-    fire_event = threading.Event()
-    laser_commander_thread = start_laser_commander(fire_event)
-  
     try:
         while True:
             frame = db[VIDEO_FRAME]
@@ -35,10 +31,7 @@ def object_recognizer(db: DictProxy):
                     for object in recognized_objects_list:
                         if object in db[SEARCHED_OBJECTS]:
                             # Turn on laser, since object was found
-                            if (not laser_commander_thread.is_alive()):
-                                laser_commander_thread = start_laser_commander(fire_event)
-                                time.sleep(0.5)
-                            fire_event.set()
+                            fire_laser()
                             db[FIRE_LASER] = True
                             break
 

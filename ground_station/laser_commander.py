@@ -13,7 +13,7 @@ def laser_commander(fire_event: threading.Event):
     loop = asyncio.new_event_loop()
 
     def handle_disconnect(_: BleakClient):
-        print("LASER device was disconnected. Cancelling all tasks in the asyncio loop")
+        print("Laser device was disconnected. Cancelling all tasks in the asyncio loop")
         for task in asyncio.all_tasks(loop):
             task.cancel()
 
@@ -40,32 +40,31 @@ def laser_commander(fire_event: threading.Event):
 
             fire_event.clear()
 
-        print('Laser Commander stopped')
-
     except asyncio.CancelledError:
-        print("LASER: all tasks in asyncio loop have been cancelled")
+        pass
     finally:
-        print("LASER: closing asyncio loop")
         loop.close()
+        print("Laser Commander stopped")
 
 
-def start_laser_commander(fire_event: threading.Event):
-    laser_commander_thread = threading.Thread(target=laser_commander, args=(fire_event,), daemon=True)
-    laser_commander_thread.start()
-    return laser_commander_thread
+fire_event = threading.Event()
+laser_commander_thread = None
+def fire_laser():
+    global laser_commander_thread, fire_event
+    if laser_commander_thread is None or not laser_commander_thread.is_alive():
+        fire_event.clear()
+        laser_commander_thread = threading.Thread(
+            target=laser_commander, args=(fire_event,), daemon=True)
+        laser_commander_thread.start()
+
+    fire_event.set()
 
 
 if __name__ == "__main__":
-    fire_event = threading.Event()
-
     try:
         while True:
-            print("Starting LASER commander thread")
-            laser_commander_thread = start_laser_commander(fire_event)
-
-            while laser_commander_thread.is_alive():
-                print("Time", int(time.monotonic()))
-                fire_event.set()
-                time.sleep(5)
+            print("Time", int(time.monotonic()))
+            fire_laser()
+            time.sleep(5)
     except KeyboardInterrupt:
         print('Main process shutting down')
