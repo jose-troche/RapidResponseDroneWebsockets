@@ -49,10 +49,11 @@ function webSocketOnMessage({ data }) {
 
     if (DRONE_TELEMETRY in event) {
         const t = event[DRONE_TELEMETRY];
-        getById(DRONE_HEIGHT).innerHTML = t['h'];
+        getById(DRONE_HEIGHT).innerHTML = t.h;
         const batteryEl = getById(DRONE_BATTERY);
-        batteryEl.innerHTML = `${t['bat']}%`;
-        batteryEl.style.backgroundColor = t['bat'] > 60 ? '' : (t['bat'] < 30 ? '#faa' : 'yellow');
+        batteryEl.innerHTML = `${t.bat} %`;
+        getById(DRONE_CONNECTION).style.color = t.bat ? 'green' : 'red';
+        batteryEl.style.backgroundColor = !t.bat || t.bat > 60 ? '' : (t.bat < 30 ? '#faa' : 'yellow');
     }
 };
 

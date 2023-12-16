@@ -43,8 +43,9 @@ async def sender_handler(websocket, db: DictProxy):
     while True:
         event = {}
 
-        if db[DRONE_TELEMETRY]:
-            event[DRONE_TELEMETRY] = db[DRONE_TELEMETRY]
+
+        # Send telemetry. Empty {} if not able to read from drone
+        event[DRONE_TELEMETRY] = db[DRONE_TELEMETRY]
 
         if db[VIDEO_FRAME] is not None:
             jpg = to_jpg(db[VIDEO_FRAME])
@@ -82,4 +83,4 @@ def websocket_server(db: DictProxy):
     try:
         asyncio.run(start_websocket_server(db))
     except KeyboardInterrupt:
-        print("Websocket Server stopping ...")
+        print("Websocket Server stopped")

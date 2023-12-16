@@ -23,7 +23,7 @@ def video_receiver(db: DictProxy):
     except KeyboardInterrupt:
         pass
     finally:
-        print('Video Receiver stopping ...')
+        print('Video Receiver stopped')
         if capture:
             capture.release()
         cv2.destroyAllWindows()

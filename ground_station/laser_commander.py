@@ -40,7 +40,7 @@ def laser_commander(fire_event: threading.Event):
 
             fire_event.clear()
 
-        print('Laser Commander stopping ...')
+        print('Laser Commander stopped')
 
     except asyncio.CancelledError:
         print("LASER: all tasks in asyncio loop have been cancelled")

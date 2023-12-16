@@ -48,4 +48,4 @@ def object_recognizer(db: DictProxy):
             time.sleep(0.75)
     except KeyboardInterrupt:
         time.sleep(0.5)
-        print('Shutting down the Object Recognizer')
+        print('Object Recognizer stopped')

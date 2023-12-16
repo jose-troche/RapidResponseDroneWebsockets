@@ -17,6 +17,6 @@ def db_initialize(db: DictProxy):
     db[SEARCHED_OBJECTS] = set(['laptop', 'f35'])
     db[FIRE_LASER] = False
     db[VOICE_COMMAND] = None
-    db[DRONE_TELEMETRY] = {'bat': '100'}
+    db[DRONE_TELEMETRY] = {}
     db[LAST_DRONE_COMMAND] =  None
 

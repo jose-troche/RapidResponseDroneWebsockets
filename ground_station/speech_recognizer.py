@@ -15,7 +15,7 @@ def speech_recognizer(db: DictProxy):
         asyncio.run(basic_transcribe(db))
     except KeyboardInterrupt:
         time.sleep(0.5)
-        print("Speech Recognizer stopping ...")
+        print("Speech Recognizer stopped")
 
 
 class TranscriptEventHandler(TranscriptResultStreamHandler):

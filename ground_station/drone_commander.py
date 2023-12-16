@@ -24,19 +24,23 @@ def drone_telemetry_listener(db: DictProxy):
     TELLO_TELEMETRY_PORT = 8890
     telemetry_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     telemetry_socket.bind(('', TELLO_TELEMETRY_PORT))
+    telemetry_socket.settimeout(2.0)
 
     try:
         while True:
-            data, _ = telemetry_socket.recvfrom(1024)
-            data_dictionary = {}
-            for item in data.decode().split(';'):
-                if ':' in item:
-                    k, v = item.split(':')
-                    data_dictionary[k] = v
+            try:
+                data, _ = telemetry_socket.recvfrom(1024)
+                data_dictionary = {}
+                for item in data.decode().split(';'):
+                    if ':' in item:
+                        k, v = item.split(':')
+                        data_dictionary[k] = v
+            except socket.timeout:
+                data_dictionary = {}
 
             db[DRONE_TELEMETRY] = data_dictionary
 
     except KeyboardInterrupt:
         time.sleep(0.5)
-        print('Drone Telemetry Listener stopping ...')
         telemetry_socket.close()
+        print('Drone Telemetry Listener stopped')
