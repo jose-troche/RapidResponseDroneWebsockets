@@ -28,12 +28,15 @@ async def receiver_handler(websocket, db: DictProxy):
 
         if DRONE_COMMAND in event:
             drone_command = event[DRONE_COMMAND]
-            if db[LAST_DRONE_COMMAND] != drone_command:
-                db[LAST_DRONE_COMMAND] = drone_command
-                print(f'Drone command: {drone_command}')
-                send_command_to_drone(drone_command)
-            else:
-                send_command_to_drone('stop')
+            try:
+                if db[LAST_DRONE_COMMAND] != drone_command:
+                    db[LAST_DRONE_COMMAND] = drone_command
+                    print(f'Drone command: {drone_command}')
+                    send_command_to_drone(drone_command)
+                else:
+                    send_command_to_drone('stop')
+            except Exception as e:
+                print('Error when sending a command to the drone.', e)
 
         if SEARCHED_OBJECTS in event:
             db[SEARCHED_OBJECTS] = set([i.lower().strip() for i in event[SEARCHED_OBJECTS]])
