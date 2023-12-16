@@ -1,5 +1,3 @@
-const websocket = new WebSocket("ws://localhost:5678/");
-
 const VIDEO_FRAME = 'VIDEO_FRAME';
 const RECOGNIZED_OBJECTS = 'RECOGNIZED_OBJECTS';
 const SEARCHED_OBJECTS = 'SEARCHED_OBJECTS';
@@ -9,11 +7,17 @@ const DRONE_TELEMETRY = 'DRONE_TELEMETRY';
 const DRONE_COMMAND = 'DRONE_COMMAND';
 const DRONE_BATTERY = 'DRONE_BATTERY';
 const DRONE_HEIGHT = 'DRONE_HEIGHT';
+const SERVER_CONNECTION = 'SERVER_CONNECTION';
+const DRONE_CONNECTION = 'DRONE_CONNECTION';
 
 const getById = (id) => document.getElementById(id);
 
+// Websocket
+let websocket;
+connectWebsocket();
+
 // Websocket message handler
-websocket.onmessage = ({ data }) => {
+function webSocketOnMessage({ data }) {
     const event = JSON.parse(data);
 
     if (VIDEO_FRAME in event) {
@@ -51,6 +55,30 @@ websocket.onmessage = ({ data }) => {
         batteryEl.style.backgroundColor = t['bat'] > 60 ? '' : (t['bat'] < 30 ? '#faa' : 'yellow');
     }
 };
+
+function connectWebsocket() {
+    websocket = new WebSocket('ws://localhost:5678');
+
+    websocket.onopen = function() {
+        console.log('Websocket server connected!');
+        getById(SERVER_CONNECTION).style.color = 'green';
+    };
+
+    websocket.onmessage = webSocketOnMessage;
+
+    websocket.onerror = function(err) {
+        if (err.currentTarget.readyState == 3) {
+            websocket.close();
+        }
+    };
+
+    websocket.onclose = function() {
+        console.log('Socket is closed. Reconnecting in a moment ...');
+        getById(SERVER_CONNECTION).style.color = 'red';
+        getById(DRONE_CONNECTION).style.color = 'red';
+        setTimeout(connectWebsocket, 2000);
+    };
+}
 
 // ------------------------  Send Drone commands mapped from GamePad ------------------------------
 //   Drone commands conform to:
