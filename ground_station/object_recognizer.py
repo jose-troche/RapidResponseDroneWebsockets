@@ -1,8 +1,6 @@
 import time
-import threading
 import boto3
 import video_frame_utilities
-from laser_commander import fire_laser
 from database import VIDEO_FRAME, RECOGNIZED_OBJECTS, SEARCHED_OBJECTS, FIRE_LASER
 from multiprocessing.managers import DictProxy
 
@@ -15,7 +13,9 @@ def object_recognizer(db: DictProxy):
     try:
         while True:
             frame = db[VIDEO_FRAME]
-            if not frame is None:
+            if frame is None:
+                db[RECOGNIZED_OBJECTS] = []
+            else:
                 cropped_frame = video_frame_utilities.crop_margin(frame, 300) # Original 960x720
                 image_bytes = video_frame_utilities.to_jpg(cropped_frame)
 
@@ -24,14 +24,13 @@ def object_recognizer(db: DictProxy):
                         Image={'Bytes': image_bytes},
                         MinConfidence = 80.0
                     )
+                    db[RECOGNIZED_OBJECTS] = response['Labels']
                     recognized_objects_list = [ label['Name'].lower().strip() for label in response['Labels'] ]
-                    db[RECOGNIZED_OBJECTS] = response['Labels'];
                     # print(recognized_objects_list)
 
                     for object in recognized_objects_list:
                         if object in db[SEARCHED_OBJECTS]:
                             # Turn on laser, since object was found
-                            fire_laser()
                             db[FIRE_LASER] = True
                             break
 

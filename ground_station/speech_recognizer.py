@@ -32,17 +32,20 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
                                 "go higher",
                                 "go lower",
                                 "go down",
+                                "clockwise",
                                 "flip left",
                                 "flip right",
                                 "flip forward",
                                 "flip back",
                                 "start video",
                                 "stop video",
+                                "neutral",
+                                "hover",
                                 "emergency",
                                 "alert"]
 
         DISTANCE_CM = 30
-        ANGLE = 20 # deg
+        ANGLE = 360 # deg
 
         voice_to_drone_commands = {
             "take off": "takeoff",
@@ -57,6 +60,7 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
             "go lower": f"down {DISTANCE_CM + 20}",
             "go down": f"down {DISTANCE_CM + 20}",
             "go right": f"cw {ANGLE}",
+            "clockwise": f"cw {ANGLE}",
             "go left": f"ccw {ANGLE}",
             "flip left": "flip l",
             "flip right": "flip r",
@@ -66,6 +70,8 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
             "stop video": "streamoff",
             "emergency": "emergency",
             "alert": "emergency",
+            "neutral": "stop",
+            "hover": "stop"
         }
 
         valid_open_commands = ["target"]
@@ -84,7 +90,10 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
 
                     print(f'Voice command: "{voice_command}"')
 
-                    send_command_to_drone(voice_to_drone_commands[voice_command])
+                    try:
+                        send_command_to_drone(voice_to_drone_commands[voice_command])
+                    except Exception as e:
+                        print('Error when sending voice command to drone', e)
 
             # Open commands
             for substring in valid_open_commands:
@@ -92,17 +101,16 @@ class TranscriptEventHandler(TranscriptResultStreamHandler):
                     target = command.lower().split(substring, 1)[1].replace('.','').strip().split()
 
                     if len(target) > 0:
-                        target = target[0] # Just get the first word as target
+                        target = target[0:2] # Just get the first 2 words as target
 
                     if target == self.last_target:
                         return
                     self.last_target = target
 
-                    self.db[VOICE_COMMAND] = f'{substring} {target}'
-
                     if target:
                         print(f'Setting target to: "{target}"')
-                        self.db[SEARCHED_OBJECTS] = set([target])
+                        self.db[SEARCHED_OBJECTS] = set(target)
+                        self.db[VOICE_COMMAND] = f'{substring} {" ".join(target)}'
         else:
             self.last_command = None
 

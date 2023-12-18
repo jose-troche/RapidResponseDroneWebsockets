@@ -3,10 +3,12 @@
 import threading
 import time
 import asyncio
+from database import FIRE_LASER, LASER_CONNECTED
+from multiprocessing.managers import DictProxy
 from bleak import BleakClient, BleakScanner
 
 
-def laser_commander(fire_event: threading.Event):
+def listen_laser_commander_events(db: DictProxy):
     UART_SERVICE_UUID = "6E400001-B5A3-F393-E0A9-E50E24DCCA9E"
     UART_TX_CHAR_UUID = "6E400002-B5A3-F393-E0A9-E50E24DCCA9E"
 
@@ -14,6 +16,8 @@ def laser_commander(fire_event: threading.Event):
 
     def handle_disconnect(_: BleakClient):
         print("Laser device was disconnected. Cancelling all tasks in the asyncio loop")
+        db[FIRE_LASER] = False
+        db[LASER_CONNECTED] = False
         for task in asyncio.all_tasks(loop):
             task.cancel()
 
@@ -26,19 +30,20 @@ def laser_commander(fire_event: threading.Event):
         client = BleakClient(device, disconnected_callback=handle_disconnect)
         loop.run_until_complete(client.connect())
         print("Connected to LASER device")
+        db[LASER_CONNECTED] = True
 
         uart = client.services.get_service(UART_SERVICE_UUID)
         tx_characteristic = uart.get_characteristic(UART_TX_CHAR_UUID)
 
         while client:
-            # Wait for a fire event
-            fire_event.wait()
-
-            # Send a fire command to the laser: 'on' followed by the number of on/off cycles
-            print("LASER ON")
-            loop.run_until_complete(client.write_gatt_char(tx_characteristic, b'on 4', response=False))
-
-            fire_event.clear()
+            if db[FIRE_LASER]:
+                # Send a fire command to the laser: 'on' followed by the number of on/off cycles
+                print("LASER ON")
+                repeat = 5
+                loop.run_until_complete(
+                    client.write_gatt_char(tx_characteristic, f'on {repeat}'.encode(), response=False))
+                time.sleep(repeat*0.3)
+                db[FIRE_LASER] = False
 
     except asyncio.CancelledError:
         pass
@@ -47,24 +52,42 @@ def laser_commander(fire_event: threading.Event):
         print("Laser Commander stopped")
 
 
-fire_event = threading.Event()
-laser_commander_thread = None
-def fire_laser():
-    global laser_commander_thread, fire_event
-    if laser_commander_thread is None or not laser_commander_thread.is_alive():
-        fire_event.clear()
-        laser_commander_thread = threading.Thread(
-            target=laser_commander, args=(fire_event,), daemon=True)
-        laser_commander_thread.start()
-
-    fire_event.set()
-
-
-if __name__ == "__main__":
+def laser_commander(db: DictProxy):
+    laser_commander_thread: threading.Thread = None
     try:
         while True:
-            print("Time", int(time.monotonic()))
-            fire_laser()
-            time.sleep(5)
+            if laser_commander_thread is None or not laser_commander_thread.is_alive():
+                laser_commander_thread = threading.Thread(
+                    target=listen_laser_commander_events, args=(db,), daemon=True)
+                laser_commander_thread.start()
+            time.sleep(1)
+
     except KeyboardInterrupt:
-        print('Main process shutting down')
+        time.sleep(0.5)
+        print('Laser Commander stopped')
+
+if __name__ == '__main__':
+    import multiprocessing
+    from database import db_initialize
+
+    with multiprocessing.Manager() as manager:
+        db = manager.dict()
+        db_initialize(db)
+
+        p = multiprocessing.Process(target=laser_commander, args=(db, ))
+        p.start()
+
+        db[FIRE_LASER] = True
+
+        try:
+            while db[FIRE_LASER]:
+                print(f'On: {time.monotonic()}')
+                time.sleep(0.5)
+
+            print(f'Off: {time.monotonic()}')
+            p.terminate()
+        except KeyboardInterrupt:
+            pass
+        finally:
+            p.join()
+            print('Shutting down')

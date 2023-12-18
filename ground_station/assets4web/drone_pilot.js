@@ -9,6 +9,7 @@ const DRONE_BATTERY = 'DRONE_BATTERY';
 const DRONE_HEIGHT = 'DRONE_HEIGHT';
 const SERVER_CONNECTION = 'SERVER_CONNECTION';
 const DRONE_CONNECTION = 'DRONE_CONNECTION';
+const LASER_CONNECTED = 'LASER_CONNECTED';
 
 const getById = (id) => document.getElementById(id);
 
@@ -27,7 +28,11 @@ function webSocketOnMessage({ data }) {
     if (RECOGNIZED_OBJECTS in event) {
         const recognized_objects =
             event[RECOGNIZED_OBJECTS].map(i=>`${i.Name} (${i.Confidence.toFixed(1)}%)`).join('<li>');
-        getById(RECOGNIZED_OBJECTS).innerHTML = `<li>${recognized_objects}`;
+        getById(RECOGNIZED_OBJECTS).innerHTML = recognized_objects ? `<li>${recognized_objects}` : '';
+    }
+
+    if (LASER_CONNECTED in event) {
+        getById(LASER_CONNECTED).style.color = event[LASER_CONNECTED] ? 'green' : 'red';
     }
 
     if (SEARCHED_OBJECTS in event) {
@@ -36,11 +41,7 @@ function webSocketOnMessage({ data }) {
     }
 
     if (FIRE_LASER in event) {
-        const fire_laser_el = getById(FIRE_LASER);
-        fire_laser_el.style.display = event[FIRE_LASER] ? 'inline' : 'none';
-        setInterval(() => {
-            fire_laser_el.style.display = 'none';
-        }, 1000);
+        getById(FIRE_LASER).style.display = event[FIRE_LASER] ? 'inline' : 'none';
     }
 
     if (VOICE_COMMAND in event) {
@@ -77,6 +78,7 @@ function connectWebsocket() {
         console.log('Socket is closed. Reconnecting in a moment ...');
         getById(SERVER_CONNECTION).style.color = 'red';
         getById(DRONE_CONNECTION).style.color = 'red';
+        getById(LASER_CONNECTED).style.color = 'red';
         setTimeout(connectWebsocket, 2000);
     };
 }

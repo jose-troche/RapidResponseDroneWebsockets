@@ -17,8 +17,18 @@
         <h1 style="margin-top: 10px">Drone Pilot</h1>
 
         <h3>Connectivity</h3>
-        <li>Server: <span id="SERVER_CONNECTION" style="color: red;">⬤</span></li>
-        <li>Drone:<span id="DRONE_CONNECTION" style="color: red; margin-left: 8px;">⬤</span></li>
+        <div style="display: flex;">
+          <div>
+            <li style="margin-bottom: 3px;">Server:&nbsp;&nbsp;</li>
+            <li style="margin-bottom: 3px;"">Drone: </li>
+            <li>Laser: </li>
+          </div>
+          <div>
+            <div id="SERVER_CONNECTION" style="color: red;">⬤</div>
+            <div id="DRONE_CONNECTION" style="color: red;">⬤</div>
+            <div id="LASER_CONNECTED" style="color: red;">⬤</div>
+          </div>
+        </div>
         
         <h3>Gamepad Command</h3>
         <li><span id="DRONE_COMMAND" style="margin-bottom: 5px;">[None]</span></li>

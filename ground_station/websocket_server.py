@@ -8,7 +8,7 @@ from video_frame_utilities import to_jpg
 from drone_commander import send_command_to_drone
 from database import (VOICE_COMMAND, DRONE_COMMAND, VIDEO_FRAME,
                       FIRE_LASER, LAST_DRONE_COMMAND, SEARCHED_OBJECTS,
-                      DRONE_TELEMETRY, RECOGNIZED_OBJECTS)
+                      DRONE_TELEMETRY, RECOGNIZED_OBJECTS, LASER_CONNECTED)
 
 
 async def handler(websocket, db: DictProxy):
@@ -46,26 +46,22 @@ async def sender_handler(websocket, db: DictProxy):
     while True:
         event = {}
 
-
         # Send telemetry. Empty {} if not able to read from drone
         event[DRONE_TELEMETRY] = db[DRONE_TELEMETRY]
+
+        event[RECOGNIZED_OBJECTS] = db[RECOGNIZED_OBJECTS]
+
+        event[FIRE_LASER] = db[FIRE_LASER]
+
+        event[LASER_CONNECTED] = db[LASER_CONNECTED]
 
         if db[VIDEO_FRAME] is not None:
             jpg = to_jpg(db[VIDEO_FRAME])
             img_src = 'data:image/jpg;base64,' + base64.b64encode(jpg).decode()
             event[VIDEO_FRAME] = img_src
 
-        if db[RECOGNIZED_OBJECTS]:
-            event[RECOGNIZED_OBJECTS] = db[RECOGNIZED_OBJECTS]
-            # db[RECOGNIZED_OBJECTS] = []
-
-        if db[FIRE_LASER]:
-            event[FIRE_LASER] = db[FIRE_LASER]
-            db[FIRE_LASER] = False
-
         if db[VOICE_COMMAND]:
             event[VOICE_COMMAND] = db[VOICE_COMMAND]
-            db[VOICE_COMMAND] = None
 
         if db[SEARCHED_OBJECTS]:
             event[SEARCHED_OBJECTS] = list(db[SEARCHED_OBJECTS])

@@ -8,6 +8,7 @@ from object_recognizer import object_recognizer
 from speech_recognizer import speech_recognizer
 from drone_commander import drone_telemetry_listener
 from websocket_server import websocket_server
+from laser_commander import laser_commander
 from database import db_initialize
 
 if __name__ == '__main__':
@@ -17,7 +18,8 @@ if __name__ == '__main__':
         websocket_server,
         video_receiver,
         object_recognizer,
-        speech_recognizer
+        speech_recognizer,
+        laser_commander
     ]
 
     all_processes_count = len(all_processes)
